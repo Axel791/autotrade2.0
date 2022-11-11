@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 
 from sqlalchemy import (
     String,
@@ -22,7 +22,7 @@ class Report(Base):
     )
     report = Column(String(3000))
     status = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now().date())
     user = relationship("TelegramUser")
 
     def __str__(self):

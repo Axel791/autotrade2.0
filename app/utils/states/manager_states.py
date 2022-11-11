@@ -1,8 +1,11 @@
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
-class CreateOrder(StatesGroup):
-    description = State()
+class EditImages(StatesGroup):
+    edit_answer = State()
     image = State()
     image_description = State()
-    waite_next_answer = State()
+
+
+class EditOrder(StatesGroup):
+    description = State()

@@ -1,0 +1,8 @@
+aiogram==2.23.1
+sqlalchemy==1.4.41
+loguru~=0.6.0
+phonenumbers~=8.12.56
+environs~=9.5.0
+redis~=4.3.4
+dependency-injector
+psycopg2

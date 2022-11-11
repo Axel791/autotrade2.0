@@ -1,15 +1,15 @@
+import redis
 import logging
-import os
+from config import load_config
 
+from loguru import logger
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from dotenv import load_dotenv
 
-dotenv_path = os.path.abspath(os.path.join(".env"))
-if os.path.exists(dotenv_path):
-    load_dotenv(dotenv_path=dotenv_path)
+config = load_config()
 
-BOT_API = os.getenv("BOT_TOKEN")
+with redis.Redis(host=config.redis.redis_host, port=config.redis.redis_port) as redis_client:
+    logger.info("redis is connecting")
 logging.basicConfig(level=logging.INFO)
-bot = Bot(token=BOT_API, parse_mode=types.ParseMode.HTML)
+bot = Bot(token=config.tg_bot.token, parse_mode=types.ParseMode.HTML)
 dp = Dispatcher(bot, storage=MemoryStorage())

@@ -1,5 +1,6 @@
 from typing import Generic, Optional, Type, TypeVar
 from app.db.session import session
+from loguru import logger
 
 ModelType = TypeVar("ModelType")
 

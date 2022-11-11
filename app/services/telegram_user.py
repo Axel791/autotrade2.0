@@ -20,4 +20,22 @@ class TelegramUserService:
 
         return True
 
+    async def check_permission_status(self, user_id: str, permission_statuses: tuple) -> bool:
+        user = self._repository_telegram_user.check_user_permission_status(
+            user_id=user_id,
+            permission_statuses=permission_statuses
+        )
+
+        if user is None:
+            return False
+
+        return True
+
+    async def get_user(self, user_id):
+        return self._repository_telegram_user.get(id=user_id)
+
+    async def get_user_permission_status(self, user_id):
+        return self._repository_telegram_user.get(user_id=user_id).permission_status
+
+
 

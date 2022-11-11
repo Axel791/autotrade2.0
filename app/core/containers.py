@@ -12,6 +12,12 @@ from app.repository.report import RepositoryReport
 
 from app.services.validators import ValidateInformationService
 from app.services.telegram_user import TelegramUserService
+from app.services.order import OrderService
+from app.services.images import ImagesService
+from app.services.report import ReportService
+from app.services.redis import Redis
+
+from app.utils.keyboards.form_inline_keyboard import FormInlineKeyboardService
 
 
 class Container(containers.DeclarativeContainer):
@@ -23,8 +29,33 @@ class Container(containers.DeclarativeContainer):
     repository_images = providers.Singleton(RepositoryImages, model=Images)
     repository_report = providers.Singleton(RepositoryReport, model=Report)
 
+    redis = providers.Factory(
+        Redis
+    )
+    keyboard_service = providers.Factory(
+        FormInlineKeyboardService,
+        repository_telegram_user=repository_telegram_user
+    )
     validate_service = providers.Factory(ValidateInformationService)
     service_telegram_user = providers.Factory(
         TelegramUserService,
-        repository_telegram_user=repository_telegram_user,
+        repository_telegram_user=repository_telegram_user
     )
+    images_service = providers.Factory(
+        ImagesService,
+        repository_images=repository_images,
+        repository_telegram_user=repository_telegram_user,
+        repository_order=repository_order,
+        keyboard_service=keyboard_service
+    )
+    order_service = providers.Factory(
+        OrderService,
+        repository_telegram_user=repository_telegram_user,
+        repository_order=repository_order
+    )
+    report_service = providers.Factory(
+        ReportService,
+        repository_telegram_user=repository_telegram_user,
+        repository_report=repository_report
+    )
+
