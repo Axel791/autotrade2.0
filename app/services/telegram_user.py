@@ -37,5 +37,7 @@ class TelegramUserService:
     async def get_user_permission_status(self, user_id):
         return self._repository_telegram_user.get(user_id=user_id).permission_status
 
+    async def create_users(self, users: dict):
+        self._repository_telegram_user.create(obj_in=users)
 
 

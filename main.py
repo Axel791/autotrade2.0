@@ -21,6 +21,7 @@ from app.handlers import (
     manager,
     views_orders
 )
+import add_users
 
 from app.tests import create_user
 from app import middlewares
@@ -41,5 +42,5 @@ def on_startup(dispatcher: Dispatcher):
 
 if __name__ == "__main__":
     container = Container()
-    container.wire(modules=[start, create_order, report, driver, manager, views_orders, create_user])
+    container.wire(modules=[start, create_order, report, driver, manager, views_orders, create_user, add_users])
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup(dispatcher=dp))
