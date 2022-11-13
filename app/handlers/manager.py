@@ -43,6 +43,10 @@ async def managers_orders(
         return await message.answer("⛔️У вас нет прав для совершения этого действия")
 
     orders = await order_service.get_order_for_manager(user_id=user_id)
+
+    if not orders:
+        return await message.answer("Список заказов пуст")
+
     try:
         for order in orders[0*5:0*5+5]:
             await message.answer(f"💡{hbold('Мой заказ:')}\n"

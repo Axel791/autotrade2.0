@@ -54,7 +54,7 @@ class FormInlineKeyboardService:
         return manager_keyboard.add(delivered_manager).add(edit_manager)
 
     @classmethod
-    async def report_keyboard(cls, report_id: str):
+    async def report_keyboard_non_active(cls, report_id: str):
         report_keyboard = InlineKeyboardMarkup(row_width=5)
         deactivate_report = InlineKeyboardButton(
             text="Завершить",
@@ -63,6 +63,12 @@ class FormInlineKeyboardService:
                 data=f"{report_id}"
             )
         )
+
+        return report_keyboard.add(deactivate_report)
+
+    @classmethod
+    async def report_keyboard_activate(cls, report_id: str):
+        report_keyboard = InlineKeyboardMarkup(row_width=5)
         activate_report = InlineKeyboardButton(
             text="Перевести в активное",
             callback_data=report_callback.new(
@@ -71,7 +77,7 @@ class FormInlineKeyboardService:
             )
         )
 
-        return report_keyboard.add(deactivate_report).add(activate_report)
+        return report_keyboard.add(activate_report)
 
     @classmethod
     async def order_details_keyboard(cls, order_id: int):

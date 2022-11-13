@@ -22,7 +22,6 @@ from app.services.redis import Redis
 from app.services.validators import ValidateInformationService
 
 from app.utils.keyboards.form_inline_keyboard import FormInlineKeyboardService
-from app.utils.keyboards import base
 from app.utils.keyboards.callback_data import (
     calendar_callback,
     report_callback,
@@ -156,8 +155,6 @@ async def save_managers_and_send_answer(
         redis: Redis = Provide[Container.redis],
         order_service: OrderService = Provide[Container.order_service],
         image_service: ImagesService = Provide[Container.images_service],
-        report_service: ReportService = Provide[Container.report_service],
-        keyboard_service: FormInlineKeyboardService = Provide[Container.keyboard_service],
         service_telegram_user: TelegramUserService = Provide[Container.service_telegram_user],
         validate_service: ValidateInformationService = Provide[Container.validate_service]
 
@@ -208,16 +205,17 @@ async def save_managers_and_send_answer(
             date_end=date_end,
         )
         logger.info(validate_information)
-        if validate_information == "cancel" or validate_service == "back_button":
-            await callback_query.message.edit_reply_markup()
+        if validate_information == "cancel" or validate_information == "back_button":
             if check_value:
+                logger.info("here")
                 await redis.remove_value(user_id=user_id)
-
+            print("тут")
             if validate_information == "cancel":
                 await callback_query.message.answer("Действия отменены❌")
                 return await state.finish()
 
             elif validate_information == "back_button":
+                logger.info("here")
                 await ViewOrderOrReportFilter.type_date.set()
                 await callback_query.message.answer("Возращаемся к педыдущему шагу⏪")
                 await callback_query.message.answer(
@@ -234,6 +232,13 @@ async def save_managers_and_send_answer(
                 orders = await order_service.get_order_all_manager_by_date(date=date)
             else:
                 orders = await order_service.get_order_all_manager_by_date(date=(date_start, date_end))
+
+            if not orders:
+                await state.finish()
+                await callback_query.message.edit_reply_markup()
+                await redis.remove_value(user_id=user_id)
+                await callback_query.message.answer("Список заказов пуст")
+
             try:
                 for order in orders:
                     await callback_query.message.answer(f"{hbold('💡Заказ')}\n\n"
@@ -267,6 +272,13 @@ async def save_managers_and_send_answer(
                     date=(date_start, date_end),
                     users_id=users_id
                 )
+
+            if not orders:
+                await state.finish()
+                await callback_query.message.edit_reply_markup()
+                await redis.remove_value(user_id=user_id)
+                await callback_query.message.answer("Список заказов пуст")
+
             await redis.remove_value(user_id=user_id)
             try:
                 for order in orders:
@@ -290,44 +302,134 @@ async def save_managers_and_send_answer(
 
         elif (
             validate_information == "report_all_managers_one_date" or
-            validate_information == "report_all_managers_two_date"
-        ):
-            if validate_information == "report_all_managers_one_date":
-                reports = await report_service.get_report_with_all_managers(date=date)
-            else:
-                reports = await report_service.get_report_with_all_managers(date=(date_start, date_end))
-
-            for report in reports:
-                await callback_query.message.answer(
-                    f"{hbold('Отчет')}\n\n"
-                    f"{report.report}\n"
-                    f"{hbold('Дата')}: {report.created_at}\n"
-                    f"{hbold('Менеджер')}: {report.user.last_name}"
-                )
-
-            await state.finish()
-        elif (
+            validate_information == "report_all_managers_two_date" or
             validate_information == "report_next_one_date" or
             validate_information == "report_next_two_date"
         ):
-            if validate_information == "report_next_one_date":
-                reports = await report_service.get_managers_with_filter_managers(date=date, users_id=users_id)
-            else:
-                reports = await report_service.get_managers_with_filter_managers(
-                    date=(date_start, date_end),
-                    users_id=users_id
-                )
+            async with state.proxy() as data:
+                data["report_filter"] = validate_information
+                data["users_id"] = users_id
 
-            await redis.remove_value(user_id=user_id)
-            for report in reports:
+            await callback_query.message.answer(
+                "Выберите тип отчетов, которые вы хотите посмотреть:",
+                reply_markup=report_status_keyboard
+            )
+            await ViewOrderOrReportFilter.report_status.set()
+
+
+@inject
+async def filter_and_send_report(
+        callback_query: types.CallbackQuery,
+        state: FSMContext,
+        report_service: ReportService = Provide[Container.report_service],
+        keyboard_service: FormInlineKeyboardService = Provide[Container.keyboard_service],
+        redis: Redis = Provide[Container.redis]
+):
+    async with state.proxy() as state_data:
+        date = state_data.get("date")
+        date_start = state_data.get("date_start")
+        date_end = state_data.get("date_end")
+        validate_information = state_data.get("report_filter")
+        users_id = state_data["users_id"]
+
+    callback_data = callback_query.data
+    logger.info(callback_query.data)
+    report_status = False
+    user_id = callback_query.from_user.id
+
+    if callback_data == "active":
+        report_status = True
+
+    elif callback_data == "cancel":
+        await state.finish()
+        await callback_query.message.answer("Действия отменены❌")
+        await callback_query.message.edit_reply_markup()
+
+    if (
+        validate_information == "report_all_managers_one_date" or
+        validate_information == "report_all_managers_two_date"
+    ):
+
+        if validate_information == "report_all_managers_one_date":
+            reports = await report_service.get_report_with_all_managers(
+                date=date,
+                status=report_status
+            )
+        else:
+            reports = await report_service.get_report_with_all_managers(
+                date=(date_start, date_end),
+                status=report_status
+            )
+
+        if not reports:
+            await callback_query.message.edit_reply_markup()
+            await state.finish()
+            return await callback_query.message.answer("Список отчетов пуст")
+
+        for report in reports:
+
+            if callback_data == "active":
+                report_keyboard = await keyboard_service.report_keyboard_non_active(report_id=report.id)
+            else:
+                report_keyboard = await keyboard_service.report_keyboard_activate(report_id=report.id)
+            try:
                 await callback_query.message.answer(
                     f"{hbold('Отчет')}\n\n"
                     f"{report.report}\n"
                     f"{hbold('Дата')}: {report.created_at}\n"
-                    f"{hbold('Менеджер')}: {report.user.last_name}"
+                    f"{hbold('Менеджер')}: {report.user.last_name}",
+                    reply_markup=report_keyboard
                 )
+            except RetryAfter as retry:
+                logger.info(f"Flood Control: {retry}")
+                await asyncio.sleep(retry.timeout)
 
+        await state.finish()
+
+    elif (
+            validate_information == "report_next_one_date" or
+            validate_information == "report_next_two_date"
+    ):
+        if validate_information == "report_next_one_date":
+            reports = await report_service.get_managers_with_filter_managers(
+                date=date,
+                users_id=users_id,
+                status=report_status
+            )
+
+        else:
+            reports = await report_service.get_managers_with_filter_managers(
+                date=(date_start, date_end),
+                users_id=users_id,
+                status=report_status
+            )
+
+        if not reports:
+            await callback_query.message.edit_reply_markup()
             await state.finish()
+            return await callback_query.message.answer("Список отчетов пуст")
+
+        await redis.remove_value(user_id=user_id)
+        for report in reports:
+
+            if callback_data == "active":
+                report_keyboard = await keyboard_service.report_keyboard_non_active(report_id=report.id)
+            else:
+                report_keyboard = await keyboard_service.report_keyboard_activate(report_id=report.id)
+            try:
+                await callback_query.message.answer(
+                    f"{hbold('Отчет')}\n\n"
+                    f"{report.report}\n"
+                    f"{hbold('Дата')}: {report.created_at}\n"
+                    f"{hbold('Менеджер')}: {report.user.last_name}",
+                    reply_markup=report_keyboard
+                )
+            except RetryAfter as retry:
+                logger.info(f"Flood Control: {retry}")
+                await asyncio.sleep(retry.timeout)
+
+        await state.finish()
+    await callback_query.message.edit_reply_markup()
 
 
 @inject
@@ -352,6 +454,9 @@ async def in_work(
             Order.OrderStatusWork.partially_assembled,
             Order.OrderStatusWork.assembled
         ))
+    if not orders:
+        return await message.answer("Список заказов в работе пуст!")
+
     try:
         for order in orders[0*5:0*5+5]:
             await message.answer(f"💡{hbold('Активный заказа')}\n"
@@ -426,6 +531,32 @@ async def watch_next_all_orders(
     )
 
 
+@inject
+async def update_report_status(
+        callback_query: types.CallbackQuery,
+        callback_data: dict,
+        state: FSMContext,
+        report_service: ReportService = Provide[Container.report_service],
+):
+    report_id = callback_data.get("data")
+    type_report = callback_data.get("type")
+
+    if type_report == "deactivate_report":
+        await report_service.update_report_status(
+            repost_id=report_id,
+            status=False
+        )
+    elif type_report == "activate_report":
+        await report_service.update_report_status(
+            repost_id=report_id,
+            status=True
+        )
+
+    await callback_query.message.answer("Статус отчета обновлен✅")
+    await callback_query.message.delete()
+    await state.finish()
+
+
 def register_views_orders_handlers(dp: Dispatcher, *args, **kwargs):
     dp.register_message_handler(start_view_orders_or_report, lambda message: message.text == "Просмотреть данные🗂")
     dp.register_callback_query_handler(get_type_of_view, state=ViewOrderOrReportFilter.type_of_view)
@@ -450,3 +581,6 @@ def register_views_orders_handlers(dp: Dispatcher, *args, **kwargs):
         watch_next_all_orders,
         watch_next_callback.filter(type="watch_orders_next_all")
     )
+    dp.register_callback_query_handler(filter_and_send_report, state=ViewOrderOrReportFilter.report_status)
+    dp.register_callback_query_handler(update_report_status, report_callback.filter(type="activate_report"))
+    dp.register_callback_query_handler(update_report_status, report_callback.filter(type="deactivate_report"))

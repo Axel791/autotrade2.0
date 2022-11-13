@@ -46,6 +46,10 @@ async def images_assembled(
             Order.OrderStatusWork.partially_assembled
         )
     )
+
+    if not orders:
+        return await message.answer("Список заказов пуст")
+
     try:
         for order in orders[0*5:0*5+5]:
             await message.answer(f"💡{hbold('Активный заказа')}\n"
@@ -121,6 +125,10 @@ async def delivered_images(
             Order.OrderStatusWork.assembled
         )
     )
+
+    if not orders:
+        return await message.answer("Список заказов пуст")
+
     try:
         for order in orders[0*5:0*5+5]:
             await message.answer(f"💡{hbold('Активный заказа')}\n"
@@ -172,6 +180,7 @@ async def watch_next_orders_in_work(
             Order.OrderStatusWork.partially_assembled
         )
     )
+
     try:
         for order in orders[last_num * 5:last_num * 5 + 5]:
             await callback_query.message.answer(f"💡{hbold('Активный заказа')}\n"

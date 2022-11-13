@@ -29,19 +29,20 @@ class ReportService:
         report = self._repository_report.create(obj_in=obj_in)
         return report
 
-    async def get_report_with_all_managers(self, date):
+    async def get_report_with_all_managers(self, date, status: bool):
         if isinstance(date, tuple):
-            return self._repository_report.report_date_filter(date=date)
+            return self._repository_report.report_date_filter(date=date, status=status)
         else:
-            return self._repository_report.list(created_at=date)
+            return self._repository_report.list(created_at=date, status=status)
 
-    async def get_managers_with_filter_managers(self, date, users_id):
+    async def get_managers_with_filter_managers(self, date, users_id, status):
         report_list = []
         if not isinstance(date, tuple):
             for user in users_id:
                 reports = self._repository_report.list(
                     created_at=date,
-                    user_id=user
+                    user_id=user,
+                    status=status
                 )
                 for report in reports:
                     report_list.append(report)
@@ -49,10 +50,19 @@ class ReportService:
             for user in users_id:
                 reports = self._repository_report.report_manager_and_date_filter(
                     date=date,
-                    user_id=user
+                    user_id=user,
+                    status=status
                 )
                 for report in reports:
                     report_list.append(report)
-        print(report_list)
 
         return report_list
+
+    async def update_report_status(self, status: bool, repost_id):
+        db_obj = self._repository_report.get(id=repost_id)
+        obj_in = {"status": status}
+
+        return self._repository_report.update(
+            db_obj=db_obj,
+            obj_in=obj_in
+        )
