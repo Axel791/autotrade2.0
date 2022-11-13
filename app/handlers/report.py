@@ -32,7 +32,7 @@ async def start_create_report(
         return await message.answer("У вас недостаточно прав для совершения этих действий.")
 
     await message.answer(
-        "📄Нпишите боту отчет: ",
+        "📄Напишите боту отчет: ",
         reply_markup=base.cancel_keyboard
     )
 

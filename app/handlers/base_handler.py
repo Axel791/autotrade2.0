@@ -9,7 +9,7 @@ from aiogram import types, Dispatcher
 async def cancel_button(callback_query: types.CallbackQuery, state: FSMContext):
     await state.finish()
     await callback_query.message.edit_reply_markup()
-    await callback_query.message.answer("Дейсвия отменены❌")
+    await callback_query.message.answer("Действия отменены❌")
 
 
 async def back_button_create_order(callback_query: types.CallbackQuery, state: FSMContext):
