@@ -45,7 +45,7 @@ async def start_view_orders_or_report(
     if not await service_telegram_user.check_permission_status(
             user_id=user_id,
             permission_statuses=(
-                    TelegramUser.PermissionStatus.manager,
+                    TelegramUser.PermissionStatus.financier,
                     TelegramUser.PermissionStatus.super_user
             )
     ):
