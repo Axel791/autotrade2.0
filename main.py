@@ -1,3 +1,5 @@
+import logging
+
 from aiogram.utils import executor
 from aiogram import Dispatcher
 
@@ -41,6 +43,11 @@ def on_startup(dispatcher: Dispatcher):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s',
+        level=logging.INFO,
+        # level=logging.DEBUG,
+    )
     container = Container()
     container.wire(modules=[start, create_order, report, driver, manager, views_orders, create_user, add_users])
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup(dispatcher=dp))

@@ -2,6 +2,7 @@ from loguru import logger
 
 from loader import bot
 
+from aiogram.utils.exceptions import BotBlocked
 from aiogram.utils.markdown import hbold
 
 from app.repository.images import RepositoryImages
@@ -85,6 +86,7 @@ class ImagesService:
         obj_in_order = {
             "order_status": Order.OrderStatusWork.partially_assembled
         }
+        logger.info(update_images.order.user.user_id)
 
         if not self._repository_images.list(
                 order_id=db_obj.order_id,
@@ -92,39 +94,45 @@ class ImagesService:
         ):
             if image_status == Images.ImageStatus.assembled:
                 obj_in_order = {"order_status": Order.OrderStatusWork.assembled}
-
-                await bot.send_message(
-                    update_images.user.user_id,
-                    f"{hbold('💡Статус обновлен:')}\n"
-                    f"{hbold('📄Опиcание:')} {db_obj_order.description}\n"
-                    f"{hbold('❗️Статус:')} {Order.OrderStatusWork.assembled}\n\n"
-                    f"{hbold('🚛Водитель:')} {update_images.user.last_name}",
-                    reply_markup=await self._keyboard_service.order_details_keyboard(
-                        order_id=db_obj_order.id
+                try:
+                    await bot.send_message(
+                        update_images.order.user.user_id,
+                        f"{hbold('💡Статус обновлен:')}\n"
+                        f"{hbold('📄Опиcание:')} {db_obj_order.description}\n"
+                        f"{hbold('❗️Статус:')} {Order.OrderStatusWork.assembled}\n\n"
+                        f"{hbold('🚛Водитель:')} {update_images.user.last_name}",
+                        reply_markup=await self._keyboard_service.order_details_keyboard(
+                            order_id=db_obj_order.id
+                        )
                     )
-                )
+                except BotBlocked as bt_blocked:
+                    logger.info(f"{update_images.order.user.last_name} - заблокировал бота | {bt_blocked}")
 
             else:
                 obj_in_order = {"order_status": Order.OrderStatusWork.delivered}
-
-                await bot.send_message(
-                    update_images.user.user_id,
-                    f"{hbold('💡Статус обновлен:')}\n"
-                    f"{hbold('📄Опиcание:')} {db_obj_order.description}\n"
-                    f"{hbold('❗️Статус:')} {Order.OrderStatusWork.delivered}\n\n"
-                    f"{hbold('🚛Водитель:')} {update_images.user.last_name}",
-                    reply_markup=await self._keyboard_service.order_details_keyboard(
-                        order_id=db_obj_order.id
+                try:
+                    await bot.send_message(
+                        update_images.order.user.user_id,
+                        f"{hbold('💡Статус обновлен:')}\n"
+                        f"{hbold('📄Опиcание:')} {db_obj_order.description}\n"
+                        f"{hbold('❗️Статус:')} {Order.OrderStatusWork.delivered}\n\n"
+                        f"{hbold('🚛Водитель:')} {update_images.user.last_name}",
+                        reply_markup=await self._keyboard_service.order_details_keyboard(
+                            order_id=db_obj_order.id
+                        )
                     )
-                )
-
-        await bot.send_photo(
-            update_images.user.user_id,
-            update_images.image,
-            f"{hbold('💡Статус обновлен:')}\n"
-            f"{hbold('📄Опиcание:')} {update_images.image_description}\n"
-            f"{hbold('❗️Статус:')} {update_images.image_status}\n\n"
-            f"{hbold('🚛Водитель:')} {update_images.user.last_name}")
+                except BotBlocked as bt_blocked:
+                    logger.info(f"{update_images.order.user.last_name} - заблокировал бота | {bt_blocked}")
+        try:
+            await bot.send_photo(
+                update_images.order.user.user_id,
+                update_images.image,
+                f"{hbold('💡Статус обновлен:')}\n"
+                f"{hbold('📄Опиcание:')} {update_images.image_description}\n"
+                f"{hbold('❗️Статус:')} {update_images.image_status}\n\n"
+                f"{hbold('🚛Водитель:')} {update_images.user.last_name}")
+        except BotBlocked as bt_blocked:
+            logger.info(f"{update_images.order.user.last_name} - заблокировал бота | {bt_blocked}")
 
         return self._repository_order.update(
             db_obj=db_obj_order,

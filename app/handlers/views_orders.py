@@ -235,7 +235,6 @@ async def save_managers_and_send_answer(
 
             if not orders:
                 await state.finish()
-                await callback_query.message.edit_reply_markup()
                 await redis.remove_value(user_id=user_id)
                 await callback_query.message.answer("Список заказов пуст")
 
@@ -275,7 +274,6 @@ async def save_managers_and_send_answer(
 
             if not orders:
                 await state.finish()
-                await callback_query.message.edit_reply_markup()
                 await redis.remove_value(user_id=user_id)
                 await callback_query.message.answer("Список заказов пуст")
 
