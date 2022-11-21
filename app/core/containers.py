@@ -1,5 +1,8 @@
 from dependency_injector import containers, providers
 
+from app import redis_init
+from app.core.config import Settings
+
 from app.models.telegram_user import TelegramUser
 from app.models.order import Order
 from app.models.images import Images
@@ -15,23 +18,21 @@ from app.services.telegram_user import TelegramUserService
 from app.services.order import OrderService
 from app.services.images import ImagesService
 from app.services.report import ReportService
-from app.services.redis import Redis
 
 from app.utils.keyboards.form_inline_keyboard import FormInlineKeyboardService
 
 
 class Container(containers.DeclarativeContainer):
 
-    config = providers.Configuration()
+    config = providers.Singleton(Settings)
 
     repository_telegram_user = providers.Singleton(RepositoryTelegramUser, model=TelegramUser)
     repository_order = providers.Singleton(RepositoryOrder, model=Order)
     repository_images = providers.Singleton(RepositoryImages, model=Images)
     repository_report = providers.Singleton(RepositoryReport, model=Report)
 
-    redis = providers.Factory(
-        Redis
-    )
+    redis = providers.Resource(redis_init.init_redis_pool, host=config.provided.REDIS_HOST)
+
     keyboard_service = providers.Factory(
         FormInlineKeyboardService,
         repository_telegram_user=repository_telegram_user

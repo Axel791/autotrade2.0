@@ -1,21 +1,9 @@
-from config import load_config
-
+from app.core.config import settings
 from sqlalchemy import create_engine
-from sqlalchemy.engine.url import URL
 from sqlalchemy.orm import sessionmaker
 
-config = load_config()
 
-DATABASE = {
-    'drivername': 'postgresql',
-    'host': config.db.pg_host,
-    'port': config.db.pg_port,
-    'username': config.db.pg_user,
-    'password': config.db.pg_password,
-    'database': config.db.pg_database
-}
-
-engine = create_engine(URL.create(**DATABASE))
+engine = create_engine(settings.SYNC_SQLALCHEMY_DATABASE_URI)
 Session = sessionmaker(bind=engine)
 session = Session()
 

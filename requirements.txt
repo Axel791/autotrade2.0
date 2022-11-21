@@ -6,3 +6,6 @@ environs~=9.5.0
 redis~=4.3.4
 dependency-injector
 psycopg2
+
+aioredis~=2.0.1
+pydantic~=1.10.2

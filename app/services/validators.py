@@ -32,9 +32,9 @@ class ValidateInformationService:
         return valid_number
 
     @classmethod
-    async def delete_copy_manager_id(cls, managers: list) -> list:
+    async def delete_copy_manager_id(cls, managers: str) -> list:
         manager_list = []
-        clear_manager_list = [manager_id for manager_id in groupby(managers)]
+        clear_manager_list = [manager_id for manager_id in groupby(managers.split())]
         for mng in clear_manager_list:
             manager_list.append(mng[0])
         logger.info(manager_list)

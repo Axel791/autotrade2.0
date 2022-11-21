@@ -1,5 +1,6 @@
 import asyncio
 
+from aioredis import Redis
 from aiogram.utils.exceptions import RetryAfter
 from dependency_injector.wiring import Provide, inject
 from loguru import logger
@@ -18,7 +19,6 @@ from app.services.order import OrderService
 from app.services.images import ImagesService
 from app.services.telegram_user import TelegramUserService
 from app.services.report import ReportService
-from app.services.redis import Redis
 from app.services.validators import ValidateInformationService
 
 from app.utils.keyboards.form_inline_keyboard import FormInlineKeyboardService
@@ -161,7 +161,7 @@ async def save_managers_and_send_answer(
 ):
     user_id = callback_query.from_user.id
     data = callback_data.get("data")
-    check_value = await redis.check_value(user_id=user_id)
+    check_value = await redis.exists(f"manager_{user_id}")
 
     async with state.proxy() as state_data:
         type_view = state_data.get("view_type")
@@ -170,20 +170,14 @@ async def save_managers_and_send_answer(
         date_end = state_data.get("date_end")
 
     if not check_value and data.isdigit():
-        await redis.insert_value(
-            user_id=user_id,
-            value=data
-        )
+        await redis.set(f"manager_{user_id}", data)
         await callback_query.message.answer(
             f"Вы добавили к фильтру менеджера:"
             f" {await service_telegram_user.get_user(user_id=data)}"
         )
 
     elif data.isdigit():
-        await redis.append_value(
-            user_id=user_id,
-            value=data
-        )
+        await redis.append(f"manager_{user_id}", f" {data}")
         await callback_query.message.answer(
             f"Вы добавили к фильтру менеджера:"
             f" {await service_telegram_user.get_user(user_id=data)}"
@@ -192,7 +186,7 @@ async def save_managers_and_send_answer(
     if not data.isdigit():
         await callback_query.message.edit_reply_markup()
         if check_value:
-            managers = await redis.get_value(user_id=user_id)
+            managers = await redis.get(f"manager_{user_id}")
             users_id = await validate_service.delete_copy_manager_id(managers=managers)
             logger.info(f"{users_id}")
         else:
@@ -208,7 +202,7 @@ async def save_managers_and_send_answer(
         if validate_information == "cancel" or validate_information == "back_button":
             if check_value:
                 logger.info("here")
-                await redis.remove_value(user_id=user_id)
+                await redis.delete(f"manager_{user_id}")
             print("тут")
             if validate_information == "cancel":
                 await callback_query.message.answer("Действия отменены❌")
@@ -235,7 +229,7 @@ async def save_managers_and_send_answer(
 
             if not orders:
                 await state.finish()
-                await redis.remove_value(user_id=user_id)
+                await redis.delete(f"manager_{user_id}")
                 await callback_query.message.answer("Список заказов пуст")
 
             try:
@@ -274,10 +268,10 @@ async def save_managers_and_send_answer(
 
             if not orders:
                 await state.finish()
-                await redis.remove_value(user_id=user_id)
+                await redis.delete(f"manager_{user_id}")
                 await callback_query.message.answer("Список заказов пуст")
 
-            await redis.remove_value(user_id=user_id)
+            await redis.delete(f"manager_{user_id}")
             try:
                 for order in orders:
                     await callback_query.message.answer(f"{hbold('💡Заказ')}\n\n"
@@ -321,7 +315,7 @@ async def filter_and_send_report(
         state: FSMContext,
         report_service: ReportService = Provide[Container.report_service],
         keyboard_service: FormInlineKeyboardService = Provide[Container.keyboard_service],
-        redis: Redis = Provide[Container.redis]
+        # redis: Redis = Provide[Container.redis]
 ):
     async with state.proxy() as state_data:
         date = state_data.get("date")
@@ -407,7 +401,7 @@ async def filter_and_send_report(
             await state.finish()
             return await callback_query.message.answer("Список отчетов пуст")
 
-        await redis.remove_value(user_id=user_id)
+        # await redis.remove_value(user_id=user_id)
         for report in reports:
 
             if callback_data == "active":
