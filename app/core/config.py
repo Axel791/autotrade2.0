@@ -1,6 +1,5 @@
 from typing import Any, Dict, Optional
 from pydantic import BaseSettings, PostgresDsn, validator
-from loguru import logger
 
 
 class Settings(BaseSettings):

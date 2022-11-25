@@ -24,8 +24,8 @@ from app.handlers import (
     views_orders
 )
 import add_users
+import add_user
 
-from app.tests import create_user
 from app import middlewares
 
 start.register_start_handler(dp)
@@ -49,5 +49,5 @@ if __name__ == "__main__":
         # level=logging.DEBUG,
     )
     container = Container()
-    container.wire(modules=[start, create_order, report, driver, manager, views_orders, create_user, add_users])
+    container.wire(modules=[start, create_order, report, driver, manager, views_orders, add_users, add_user])
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup(dispatcher=dp))
