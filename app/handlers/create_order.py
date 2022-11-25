@@ -139,4 +139,5 @@ def register_create_order_handler(dp: Dispatcher, *args, **kwargs):
     dp.register_message_handler(get_images_and_save, state=CreateOrder.image, content_types=types.ContentTypes.PHOTO)
     dp.register_message_handler(get_image_description_and_save, state=CreateOrder.image_description)
     dp.register_callback_query_handler(waite_next_answer, state=CreateOrder.waite_next_answer)
+    dp.message_handler()
 

@@ -186,7 +186,7 @@ USERS = {
 
 
 @inject
-async def add_users(users, telegram_user_service=Provide[Container.service_telegram_user]):
+async def add_users(telegram_user_service=Provide[Container.service_telegram_user]):
     telegram_user_service = telegram_user_service.provider()
     await telegram_user_service.create_users(users=value)
 
