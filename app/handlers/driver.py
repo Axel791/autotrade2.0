@@ -198,8 +198,8 @@ async def watch_next_orders_in_work(
                     f"{hbold('📄Описание')}: {image.image_description}",
                     reply_markup=await keyboard_service.forming_image_keyboard(
                         image_id=image.id,
-                        text="Доставлен💨",
-                        type_img="image_delivered"
+                        text="Собран📥",
+                        type_img="image_assembled"
                     )
                 )
     except RetryAfter as retry:
