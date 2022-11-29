@@ -168,7 +168,7 @@ async def save_managers_and_send_answer(
         date = state_data.get("date")
         date_start = state_data.get("date_start")
         date_end = state_data.get("date_end")
-
+    logger.info(f'{check_value}')
     if not check_value and data.isdigit():
         await redis.set(f"manager_{user_id}", data)
         await callback_query.message.answer(
@@ -401,7 +401,6 @@ async def filter_and_send_report(
             await state.finish()
             return await callback_query.message.answer("Список отчетов пуст")
 
-        # await redis.remove_value(user_id=user_id)
         for report in reports:
 
             if callback_data == "active":
@@ -456,15 +455,16 @@ async def in_work(
                                  f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
                                  f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
             images = await images_service.get_images_assembled_or_in_work()
-            for image in images:
-                await bot.send_photo(
-                    user_id,
-                    image.image,
-                    f"{hbold('📄Описание: ')} {image.image_description}",
-                    reply_markup=await keyboard_service.forming_manager_keyboard(
-                        image_id=image.id,
+            if images:
+                for image in images:
+                    await bot.send_photo(
+                        user_id,
+                        image.image,
+                        f"{hbold('📄Описание: ')} {image.image_description}",
+                        reply_markup=await keyboard_service.forming_manager_keyboard(
+                            image_id=image.id,
+                        )
                     )
-                )
     except RetryAfter as retry:
         logger.info(f"Flood is Active: {retry}")
         await asyncio.sleep(retry.timeout)
@@ -501,15 +501,16 @@ async def watch_next_all_orders(
                                  f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
                                  f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
             images = await image_service.get_images_assembled_or_in_work()
-            for image in images:
-                await bot.send_photo(
-                    user_id,
-                    image.image,
-                    f"{hbold('📄Описание: ')} {image.image_description}",
-                    reply_markup=await keyboard_service.forming_manager_keyboard(
-                        image_id=image.id,
+            if images:
+                for image in images:
+                    await bot.send_photo(
+                        user_id,
+                        image.image,
+                        f"{hbold('📄Описание: ')} {image.image_description}",
+                        reply_markup=await keyboard_service.forming_manager_keyboard(
+                            image_id=image.id,
+                        )
                     )
-                )
     except RetryAfter as retry:
         await asyncio.sleep(retry.timeout)
         logger.info(f"Flood is Active: {retry}")
