@@ -255,16 +255,21 @@ async def save_managers_and_send_answer(
                 validate_information == "order_next_one_date" or
                 validate_information == "order_next_two_date"
         ):
-            if validate_information == "order_next_one_date":
-                orders = await order_service.get_order_filter_managers_by_date(
-                    date=date,
-                    users_id=users_id
-                )
+            if users_id:
+                if validate_information == "order_next_one_date":
+                    orders = await order_service.get_order_filter_managers_by_date(
+                        date=date,
+                        users_id=users_id
+                    )
+                else:
+                    orders = await order_service.get_order_filter_managers_by_date(
+                        date=(date_start, date_end),
+                        users_id=users_id
+                    )
             else:
-                orders = await order_service.get_order_filter_managers_by_date(
-                    date=(date_start, date_end),
-                    users_id=users_id
-                )
+                await callback_query.message.answer("Вы не выбрали ни одного менеджера,"
+                                                    " нажмите: 'Просмотреть данные' и выберите менеджеров")
+                return await state.finish()
 
             if not orders:
                 await state.finish()
@@ -323,6 +328,11 @@ async def filter_and_send_report(
         date_end = state_data.get("date_end")
         validate_information = state_data.get("report_filter")
         users_id = state_data["users_id"]
+
+    if not users_id:
+        await callback_query.message.answer("Вы не выбрали ни одного менеджера,"
+                                            " нажмите: 'Просмотреть данные' и выберите менеджеров")
+        return await state.finish()
 
     callback_data = callback_query.data
     logger.info(callback_query.data)

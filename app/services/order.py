@@ -60,19 +60,22 @@ class OrderService:
         return orders
 
     async def get_order_filter_managers_by_date(self, date, users_id):
-        orders_list = []
-        if not isinstance(date, tuple):
-            for user in users_id:
-                orders = self._repository_order.list(created_at=date, user_id=user)
-                for order in orders:
-                    orders_list.append(order)
-        else:
-            for user in users_id:
-                orders = self._repository_order.get_order_by_date_filter_managers(date=date, user_id=user)
-                for order in orders:
-                    orders_list.append(order)
+        if users_id:
+            orders_list = []
+            if not isinstance(date, tuple):
+                for user in users_id:
+                    orders = self._repository_order.list(created_at=date, user_id=user)
+                    for order in orders:
+                        orders_list.append(order)
+            else:
+                for user in users_id:
+                    orders = self._repository_order.get_order_by_date_filter_managers(date=date, user_id=user)
+                    for order in orders:
+                        orders_list.append(order)
 
-        return orders_list
+            return orders_list
+
+        return []
 
     async def get_all_orders(self):
         return self._repository_order.list()

@@ -39,7 +39,7 @@ class FormInlineKeyboardService:
         delivered_manager = InlineKeyboardButton(
             text="Доставлен💨",
             callback_data=images_callback.new(
-                type="image_delivered",
+                type="image_delivered_manager",
                 data=f"{image_id}"
             )
         )

@@ -161,7 +161,7 @@ class ImagesService:
         )
 
     async def get_image_for_manager(self, order_id):
-        return self._repository_images.list(order_id=order_id)
+        return self._repository_images.get_orders_assembled_or_in_work(order_id=order_id)
 
     async def update_images(self, edit_obj: str, edit_answer: str, image_id):
         db_obj = self._repository_images.get(id=image_id)

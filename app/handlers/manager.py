@@ -12,6 +12,7 @@ from app.core.containers import Container
 from loader import bot
 
 from app.models.telegram_user import TelegramUser
+from app.models.images import Images
 
 from app.services.order import OrderService
 from app.services.images import ImagesService
@@ -267,7 +268,30 @@ async def edit_image_description(
     await state.finish()
 
 
+@inject
+async def image_delivered_manager(
+        callback_query: types.CallbackQuery,
+        callback_data: dict,
+        image_service: ImagesService = Provide[Container.images_service],
+):
+    data = callback_data.get("data")
+    logger.info(data)
+    await image_service.update_images_status(
+        image_id=data,
+        image_status=Images.ImageStatus.delivered,
+        image_status_past=Images.ImageStatus.assembled,
+        user_id=callback_query.from_user.id
+    )
+    await callback_query.message.delete()
+
+
 def register_manager_handlers(dp: Dispatcher, *args, **kwargs):
+    dp.register_callback_query_handler(
+        image_delivered_manager,
+        manager_callback.filter(
+            type="image_delivered_manager"
+        )
+    )
     dp.register_message_handler(managers_orders, lambda message: message.text == "Мои заказы💼")
     dp.register_callback_query_handler(
         get_order_details,

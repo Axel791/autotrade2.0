@@ -16,3 +16,11 @@ class RepositoryImages(RepositoryBase[Images]):
             )
         ).all()
 
+    def get_orders_assembled_or_in_work(self, order_id):
+        return self._session.query(self._model).filter(
+            or_(
+                self._model.image_status == Images.ImageStatus.assembled,
+                self._model.image_status == Images.ImageStatus.in_work,
+            ), self._model.order_id == order_id
+        ).all()
+
