@@ -181,3 +181,6 @@ class ImagesService:
 
     async def get_images_assembled_or_in_work(self):
         return self._repository_images.get_assembled_or_in_work_images()
+
+    async def list(self, order_id):
+        return self._repository_images.list(order_id=order_id)

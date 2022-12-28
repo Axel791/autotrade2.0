@@ -70,8 +70,11 @@ async def managers_orders(
                     )
                 )
     except RetryAfter as retry:
-        logger.info(f"Flood is Active: {retry}")
         await asyncio.sleep(retry.timeout)
+        await callback_query.message.answer(
+            f"Слишком много сообщений, подождите: {retry.timeout}\n"
+            f"После истечения времени, бот продолжит отправку сообщений"
+        )
     logger.info("Закончили")
     await message.answer(
         "Чтобы просмотреть следущие заказы, нажмите на кнопку ниже",
@@ -117,8 +120,11 @@ async def watch_next_my_orders_managers(
                     )
                 )
     except RetryAfter as retry:
-        logger.info(f"Flood is Active: {retry}")
         await asyncio.sleep(retry.timeout)
+        await callback_query.message.answer(
+            f"Слишком много сообщений, подождите: {retry.timeout}\n"
+            f"После истечения времени, бот продолжит отправку сообщений"
+        )
 
     await callback_query.message.answer(
         "Чтобы просмотреть следущие заказы, нажмите на кнопку ниже",

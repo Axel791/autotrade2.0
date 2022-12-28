@@ -6,7 +6,7 @@ from app.models.order import Order
 
 class RepositoryOrder(RepositoryBase[Order]):
 
-    def get_order_by_status(self,  statuses: tuple) -> list:
+    def get_order_by_status(self, statuses: tuple) -> list:
         return self._session.query(self._model).filter(
             or_(
                 self._model.order_status == statuses[0],
@@ -33,4 +33,28 @@ class RepositoryOrder(RepositoryBase[Order]):
             self._model.created_at >= date[0],
             self._model.created_at <= date[1],
             self._model.user_id == user_id
+        ).all()
+
+    def get_orders_more_date(self, date: tuple):
+        return self._session.query(self._model).filter(
+            self._model.created_at.between(date[0], date[1]),
+            self._model.financier_check == False,
+            or_(
+                self._model.user_id == 6,
+                self._model.user_id == 1,
+                self._model.user_id == 2,
+                self._model.user_id == 7
+            )
+        ).all()
+
+    def get_orders_one_date(self, date):
+        return self._session.query(self._model).filter(
+            self._model.created_at == date,
+            self._model.financier_check == False,
+            or_(
+                self._model.user_id == 6,
+                self._model.user_id == 1,
+                self._model.user_id == 2,
+                self._model.user_id == 7
+            )
         ).all()

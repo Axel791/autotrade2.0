@@ -7,7 +7,8 @@ from sqlalchemy import (
     Integer,
     ForeignKey,
     Enum,
-    DateTime
+    DateTime,
+    Boolean
 )
 from sqlalchemy.orm import relationship
 from app.db.base import Base
@@ -30,6 +31,7 @@ class Order(Base):
     description = Column(String(2000), nullable=False)
     order_status = Column(Enum(OrderStatusWork), default=OrderStatusWork.in_work)
     created_at = Column(DateTime, default=datetime.now().date())
+    financier_check = Column(Boolean, default=False)
     user = relationship("TelegramUser")
 
     def __str__(self):

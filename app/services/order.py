@@ -80,7 +80,22 @@ class OrderService:
     async def get_all_orders(self):
         return self._repository_order.list()
 
+    async def get_orders_for_fin(self,  date):
+        if isinstance(date, tuple):
+            return self._repository_order.get_orders_more_date(
+                date=date
+            )
+        return self._repository_order.get_orders_one_date(
+            date=date
+        )
 
+    async def close(self, order_id):
+        order = self._repository_order.get(id=order_id)
+        return self._repository_order.update(
+            db_obj=order,
+            obj_in={"financier_check": True},
+            commit=True
+        )
 
 
 

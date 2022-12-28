@@ -6,14 +6,6 @@ from aiogram import Dispatcher
 from loader import dp
 from app.core.containers import Container
 
-from app.db.base import Base
-from app.db.session import engine
-
-from app.models.order import Order
-from app.models.telegram_user import TelegramUser
-from app.models.images import Images
-from app.models.report import Report
-
 from app.handlers import (
     start,
     base_handler,
@@ -38,7 +30,6 @@ views_orders.register_views_orders_handlers(dp)
 
 
 def on_startup(dispatcher: Dispatcher):
-    Base.metadata.create_all(bind=engine)
     middlewares.setup(dp=dispatcher)
 
 
@@ -49,5 +40,7 @@ if __name__ == "__main__":
         # level=logging.DEBUG,
     )
     container = Container()
+    db = container.db()
+    db.create_database()
     container.wire(modules=[start, create_order, report, driver, manager, views_orders, add_users, add_user])
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup(dispatcher=dp))

@@ -26,7 +26,8 @@ from app.utils.keyboards.callback_data import (
     calendar_callback,
     report_callback,
     view_managers_callback,
-    watch_next_callback
+    watch_next_callback,
+    close_fin_order
 )
 from app.utils.keyboards.view_orders_keyboard import (
     views_keyboard,
@@ -72,8 +73,11 @@ async def get_type_of_view(callback_query: types.CallbackQuery, state: FSMContex
 async def get_type_date(
         callback_query: types.CallbackQuery,
         state: FSMContext,
-        keyboard_service: FormInlineKeyboardService = Provide[Container.keyboard_service]
+        keyboard_service: FormInlineKeyboardService = Provide[Container.keyboard_service],
+        order_service: OrderService = Provide[Container.order_service],
+        image_service: ImagesService = Provide[Container.images_service]
 ):
+    user_id = callback_query.from_user.id
     await callback_query.message.edit_reply_markup()
     callback_data = callback_query.data
 
@@ -91,13 +95,46 @@ async def get_type_date(
         return await ViewOrderOrReportFilter.date_start.set()
 
     async with state.proxy() as data:
+        type_view = data.get("view_type")
         data["date"] = callback_data
 
-    await callback_query.message.answer(
-        "Выберите менеджеров: ",
-        reply_markup=await keyboard_service.manager_keyboard()
-    )
-    await ViewOrderOrReportFilter.managers.set()
+    if type_view == "order":
+        orders = await order_service.get_orders_for_fin(
+            date=callback_data
+        )
+        if not orders:
+            await callback_query.message.answer("Список заказов пуст!")
+            return await state.finish()
+        try:
+            for order in orders:
+                await callback_query.message.answer(f"{hbold('💡Заказ')}\n\n"
+                                                    f"{hbold('📄Описание')}: {order.description}\n"
+                                                    f"{hbold('Создан')}: {order.created_at}\n"
+                                                    f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
+                                                    f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}",
+                                                    reply_markup=await keyboard_service.close_fin_order(
+                                                        order_id=order.id)
+                                                    )
+                images = await image_service.list(order_id=order.id)
+                for image in images:
+                    await bot.send_photo(
+                        user_id,
+                        image.image,
+                        f"{hbold('📄Описание')}: {image.image_description}"
+                    )
+        except RetryAfter as retry:
+            await asyncio.sleep(retry.timeout)
+            await callback_query.message.answer(
+                f"Слишком много сообщений, подождите: {retry.timeout}\n"
+                f"После истечения времени, бот продолжит отправку сообщений"
+            )
+        await state.finish()
+    else:
+        await callback_query.message.answer(
+            "Выберите менеджеров: ",
+            reply_markup=await keyboard_service.manager_keyboard()
+        )
+        await ViewOrderOrReportFilter.managers.set()
 
 
 @inject
@@ -126,20 +163,60 @@ async def save_end_date(
         callback_data: dict,
         state: FSMContext,
         keyboard_service: FormInlineKeyboardService = Provide[Container.keyboard_service],
-        validate_service: ValidateInformationService = Provide[Container.validate_service]
+        validate_service: ValidateInformationService = Provide[Container.validate_service],
+        order_service: OrderService = Provide[Container.order_service],
+        image_service: ImagesService = Provide[Container.images_service]
 ):
     async with state.proxy() as data:
+        user_id = callback_query.from_user.id
         start_date = data.get("date_start")
         selected, date = await keyboard_service.process_selection(callback_query, callback_data)
         if selected:
             logger.info(f"{start_date} {date}")
             data["date_end"] = date
             if await validate_service.validate_date(date_end=data["date_end"], date_start=start_date):
-                await callback_query.message.answer(
-                    "Выберите менеджеров: ",
-                    reply_markup=await keyboard_service.manager_keyboard()
-                )
-                await ViewOrderOrReportFilter.managers.set()
+                async with state.proxy() as state_data:
+                    type_view = state_data.get("view_type")
+                    date_start = state_data.get("date_start")
+                    date_end = state_data.get("date_end")
+                if type_view == "order":
+                    orders = await order_service.get_orders_for_fin(
+                        date=(date_start, date_end)
+                    )
+                    if not orders:
+                        await callback_query.message.answer("Список заказов пуст!")
+                        return await state.finish()
+                    try:
+                        for order in orders:
+                            await callback_query.message.answer(f"{hbold('💡Заказ')}\n\n"
+                                                                f"{hbold('📄Описание')}: {order.description}\n"
+                                                                f"{hbold('Создан')}: {order.created_at}\n"
+                                                                f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
+                                                                f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}",
+                                                                reply_markup=await keyboard_service.close_fin_order(
+                                                                    order_id=order.id
+                                                                )
+                            )
+                            images = await image_service.list(order_id=order.id)
+                            for image in images:
+                                await bot.send_photo(
+                                    user_id,
+                                    image.image,
+                                    f"{hbold('📄Описание')}: {image.image_description}"
+                                )
+                    except RetryAfter as retry:
+                        await asyncio.sleep(retry.timeout)
+                        await callback_query.message.answer(
+                            f"Слишком много сообщений, подождите: {retry.timeout}\n"
+                            f"После истечения времени, бот продолжит отправку сообщений"
+                        )
+                    await state.finish()
+                else:
+                    await callback_query.message.answer(
+                        "Выберите менеджеров: ",
+                        reply_markup=await keyboard_service.manager_keyboard()
+                    )
+                    await ViewOrderOrReportFilter.managers.set()
             else:
                 await callback_query.message.answer("Ваша начальная дата не должа быть меньше конечной даты,"
                                                     "повторите ввод даты: ",
@@ -153,8 +230,8 @@ async def save_managers_and_send_answer(
         callback_data: dict,
         state: FSMContext,
         redis: Redis = Provide[Container.redis],
-        order_service: OrderService = Provide[Container.order_service],
-        image_service: ImagesService = Provide[Container.images_service],
+        # order_service: OrderService = Provide[Container.order_service],
+        # image_service: ImagesService = Provide[Container.images_service],
         service_telegram_user: TelegramUserService = Provide[Container.service_telegram_user],
         validate_service: ValidateInformationService = Provide[Container.validate_service]
 
@@ -198,106 +275,106 @@ async def save_managers_and_send_answer(
             date_start=date_start,
             date_end=date_end,
         )
-        logger.info(validate_information)
-        if validate_information == "cancel" or validate_information == "back_button":
-            if check_value:
-                logger.info("here")
-                await redis.delete(f"manager_{user_id}")
-            print("тут")
-            if validate_information == "cancel":
-                await callback_query.message.answer("Действия отменены❌")
-                return await state.finish()
-
-            elif validate_information == "back_button":
-                logger.info("here")
-                await ViewOrderOrReportFilter.type_date.set()
-                await callback_query.message.answer("Возращаемся к педыдущему шагу⏪")
-                await callback_query.message.answer(
-                    "Выберите промежуток за который хотите просмотреть заказы: ",
-                    reply_markup=date_keyboard
-                )
-
-        elif (
-                validate_information == "order_all_managers_one_date"
-                or validate_information == "order_all_managers_two_date"
-        ):
-
-            if validate_information == "order_all_managers_one_date":
-                orders = await order_service.get_order_all_manager_by_date(date=date)
-            else:
-                orders = await order_service.get_order_all_manager_by_date(date=(date_start, date_end))
-
-            if not orders:
-                await state.finish()
-                await redis.delete(f"manager_{user_id}")
-                await callback_query.message.answer("Список заказов пуст")
-
-            try:
-                for order in orders:
-                    await callback_query.message.answer(f"{hbold('💡Заказ')}\n\n"
-                                                        f"{hbold('📄Описание')}: {order.description}\n"
-                                                        f"{hbold('Создан')}: {order.created_at}"
-                                                        f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
-                                                        f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
-                    images = await image_service.get_image_for_manager(order_id=order.id)
-                    for image in images:
-                        await bot.send_photo(
-                            user_id,
-                            image.image,
-                            f"{hbold('📄Описание')}: {image.image_description}"
-                        )
-            except RetryAfter as retry:
-                logger.info(f"Flood is Active: {retry}")
-                await asyncio.sleep(retry.timeout)
-
-            await state.finish()
-        elif (
-                validate_information == "order_next_one_date" or
-                validate_information == "order_next_two_date"
-        ):
-            if users_id:
-                if validate_information == "order_next_one_date":
-                    orders = await order_service.get_order_filter_managers_by_date(
-                        date=date,
-                        users_id=users_id
-                    )
-                else:
-                    orders = await order_service.get_order_filter_managers_by_date(
-                        date=(date_start, date_end),
-                        users_id=users_id
-                    )
-            else:
-                await callback_query.message.answer("Вы не выбрали ни одного менеджера,"
-                                                    " нажмите: 'Просмотреть данные' и выберите менеджеров")
-                return await state.finish()
-
-            if not orders:
-                await state.finish()
-                await redis.delete(f"manager_{user_id}")
-                await callback_query.message.answer("Список заказов пуст")
-
-            await redis.delete(f"manager_{user_id}")
-            try:
-                for order in orders:
-                    await callback_query.message.answer(f"{hbold('💡Заказ')}\n\n"
-                                                        f"{hbold('📄Описание')}: {order.description}\n"
-                                                        f"{hbold('Создан')}: {order.created_at}"
-                                                        f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
-                                                        f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
-                    images = await image_service.get_image_for_manager(order_id=order.id)
-                    for image in images:
-                        await bot.send_photo(
-                            user_id,
-                            image.image,
-                            f"{hbold('📄Описание')}: {image.image_description}"
-                        )
-            except RetryAfter as retry:
-                logger.info(f"Flood is Active: {retry}")
-                await asyncio.sleep(retry.timeout)
-
-            await state.finish()
-
-        elif (
+#         logger.info(validate_information)
+#         if validate_information == "cancel" or validate_information == "back_button":
+#             if check_value:
+#                 logger.info("here")
+#                 await redis.delete(f"manager_{user_id}")
+#             print("тут")
+#             if validate_information == "cancel":
+#                 await callback_query.message.answer("Действия отменены❌")
+#                 return await state.finish()
+#
+#             elif validate_information == "back_button":
+#                 logger.info("here")
+#                 await ViewOrderOrReportFilter.type_date.set()
+#                 await callback_query.message.answer("Возращаемся к педыдущему шагу⏪")
+#                 await callback_query.message.answer(
+#                     "Выберите промежуток за который хотите просмотреть заказы: ",
+#                     reply_markup=date_keyboard
+#                 )
+#
+#         elif (
+#                 validate_information == "order_all_managers_one_date"
+#                 or validate_information == "order_all_managers_two_date"
+#         ):
+#
+#             if validate_information == "order_all_managers_one_date":
+#                 orders = await order_service.get_order_all_manager_by_date(date=date)
+#             else:
+#                 orders = await order_service.get_order_all_manager_by_date(date=(date_start, date_end))
+#
+#             if not orders:
+#                 await state.finish()
+#                 await redis.delete(f"manager_{user_id}")
+#                 await callback_query.message.answer("Список заказов пуст")
+#
+#             try:
+#                 for order in orders:
+#                     await callback_query.message.answer(f"{hbold('💡Заказ')}\n\n"
+#                                                         f"{hbold('📄Описание')}: {order.description}\n"
+#                                                         f"{hbold('Создан')}: {order.created_at}"
+#                                                         f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
+#                                                         f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
+#                     images = await image_service.get_image_for_manager(order_id=order.id)
+#                     for image in images:
+#                         await bot.send_photo(
+#                             user_id,
+#                             image.image,
+#                             f"{hbold('📄Описание')}: {image.image_description}"
+#                         )
+#             except RetryAfter as retry:
+#                 logger.info(f"Flood is Active: {retry}")
+#                 await asyncio.sleep(retry.timeout)
+#
+#             await state.finish()
+#         elif (
+#                 validate_information == "order_next_one_date" or
+#                 validate_information == "order_next_two_date"
+#         ):
+#             if users_id:
+#                 if validate_information == "order_next_one_date":
+#                     orders = await order_service.get_order_filter_managers_by_date(
+#                         date=date,
+#                         users_id=users_id
+#                     )
+#                 else:
+#                     orders = await order_service.get_order_filter_managers_by_date(
+#                         date=(date_start, date_end),
+#                         users_id=users_id
+#                     )
+#             else:
+#                 await callback_query.message.answer("Вы не выбрали ни одного менеджера,"
+#                                                     " нажмите: 'Просмотреть данные' и выберите менеджеров")
+#                 return await state.finish()
+#
+#             if not orders:
+#                 await state.finish()
+#                 await redis.delete(f"manager_{user_id}")
+#                 await callback_query.message.answer("Список заказов пуст")
+#
+#             await redis.delete(f"manager_{user_id}")
+#             try:
+#                 for order in orders:
+#                     await callback_query.message.answer(f"{hbold('💡Заказ')}\n\n"
+#                                                         f"{hbold('📄Описание')}: {order.description}\n"
+#                                                         f"{hbold('Создан')}: {order.created_at}"
+#                                                         f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
+#                                                         f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
+#                     images = await image_service.get_image_for_manager(order_id=order.id)
+#                     for image in images:
+#                         await bot.send_photo(
+#                             user_id,
+#                             image.image,
+#                             f"{hbold('📄Описание')}: {image.image_description}"
+#                         )
+#             except RetryAfter as retry:
+#                 logger.info(f"Flood is Active: {retry}")
+#                 await asyncio.sleep(retry.timeout)
+#
+#             await state.finish()
+#
+        if (
             validate_information == "report_all_managers_one_date" or
             validate_information == "report_all_managers_two_date" or
             validate_information == "report_next_one_date" or
@@ -560,6 +637,18 @@ async def update_report_status(
     await state.finish()
 
 
+@inject
+async def close_order(
+        callback_query: types.CallbackQuery,
+        callback_data: dict,
+        order_service: OrderService = Provide[Container.order_service]
+):
+    await callback_query.message.delete()
+    order_id = callback_data.get("data")
+    await order_service.close(order_id=order_id)
+    await callback_query.message.answer("Просмотрено!")
+
+
 def register_views_orders_handlers(dp: Dispatcher, *args, **kwargs):
     dp.register_message_handler(start_view_orders_or_report, lambda message: message.text == "Просмотреть данные🗂")
     dp.register_callback_query_handler(get_type_of_view, state=ViewOrderOrReportFilter.type_of_view)
@@ -587,3 +676,4 @@ def register_views_orders_handlers(dp: Dispatcher, *args, **kwargs):
     dp.register_callback_query_handler(filter_and_send_report, state=ViewOrderOrReportFilter.report_status)
     dp.register_callback_query_handler(update_report_status, report_callback.filter(type="activate_report"))
     dp.register_callback_query_handler(update_report_status, report_callback.filter(type="deactivate_report"))
+    dp.register_callback_query_handler(close_order, close_fin_order.filter(type="close_fin_order"))
