@@ -1,13 +1,13 @@
 from typing import Generic, Optional, Type, TypeVar
-from app.db.session import session
+
 
 ModelType = TypeVar("ModelType")
 
 
 class RepositoryBase(Generic[ModelType, ]):
-    def __init__(self, model: Type[ModelType]) -> None:
+    def __init__(self, model: Type[ModelType], session) -> None:
         self._model = model
-        self._session = session
+        self._session = session.session
 
     def create(
         self, obj_in

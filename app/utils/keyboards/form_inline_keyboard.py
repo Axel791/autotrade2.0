@@ -9,7 +9,8 @@ from .callback_data import (
     orders_callback,
     calendar_callback,
     view_managers_callback,
-    watch_next_callback
+    watch_next_callback,
+    close_fin_order
 )
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from app.repository.telegram_user import RepositoryTelegramUser
@@ -39,7 +40,7 @@ class FormInlineKeyboardService:
         delivered_manager = InlineKeyboardButton(
             text="Доставлен💨",
             callback_data=images_callback.new(
-                type="image_delivered",
+                type="image_delivered_manager",
                 data=f"{image_id}"
             )
         )
@@ -163,6 +164,19 @@ class FormInlineKeyboardService:
                 callback_data=watch_next_callback.new(
                     data=f"{last_num}",
                     type=f"{type_orders}",
+                )
+            )
+        )
+
+    @classmethod
+    async def close_fin_order(cls, order_id):
+        close_kb = InlineKeyboardMarkup(row_width=5)
+        return close_kb.add(
+            InlineKeyboardButton(
+                text="Завершить❌",
+                callback_data=close_fin_order.new(
+                    data=f"{order_id}",
+                    type="close_fin_order"
                 )
             )
         )
