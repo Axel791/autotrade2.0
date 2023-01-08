@@ -40,4 +40,6 @@ class TelegramUserService:
     async def create_users(self, users: dict):
         self._repository_telegram_user.create(obj_in=users)
 
+    async def list(self):
+        return self._repository_telegram_user.list()
 
