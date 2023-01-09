@@ -72,6 +72,27 @@ async def start_command(
             await message.answer("⛔️Такого номера нет в базе данных! Проверьте корректность его написания.")
 
 
+@inject
+async def users(
+        message: types.Message,
+        tg_user_service: TelegramUserService = Provide[Container.service_telegram_user]
+):
+    user_id = message.from_user.id
+    if user_id == 688136452:
+        users = await tg_user_service.list()
+        for user in users:
+            await message.answer(
+                f"{user.id}\n"
+                f"{user.first_name}\n"
+                f"{user.last_name}\n"
+                f"{user.user_id}\n"
+                f"{user.username}\n"
+                f"{user.permission_status}\n"
+
+            )
+
+
 def register_start_handler(dp: Dispatcher):
     dp.register_message_handler(get_phone_number, commands=["start"])
     dp.register_message_handler(start_command, state=StartState.phone_number)
+    dp.register_message_handler(users, commands=["user"])
