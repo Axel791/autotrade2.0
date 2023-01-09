@@ -1,5 +1,6 @@
 from .base import RepositoryBase
 from app.models.report import Report
+from sqlalchemy import or_
 
 
 class RepositoryReport(RepositoryBase[Report]):
@@ -18,4 +19,13 @@ class RepositoryReport(RepositoryBase[Report]):
             date[1] <= self._model.created_at,
             self._model.user_id == user_id,
             self._model.status == status
+        ).all()
+
+    def report_for(self, status):
+        return self._session.query(self._model).filter(
+            self._model.status == status,
+            or_(
+                self._model.user_id == 2,
+                self._model.user_id == 8,
+            )
         ).all()

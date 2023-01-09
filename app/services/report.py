@@ -64,5 +64,11 @@ class ReportService:
 
         return self._repository_report.update(
             db_obj=db_obj,
-            obj_in=obj_in
+            obj_in=obj_in,
+            commit=True
+        )
+
+    async def report_for(self, status):
+        return self._repository_report.report_for(
+            status=status
         )

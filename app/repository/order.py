@@ -58,3 +58,12 @@ class RepositoryOrder(RepositoryBase[Order]):
                 self._model.user_id == 7
             )
         ).all()
+
+    def get_order_for(self):
+        return self._session.query(self._model).filter(
+            self._model.financier_check == False,
+            or_(
+                self._model.user_id == 2,
+                self._model.user_id == 8,
+            )
+        ).all()
