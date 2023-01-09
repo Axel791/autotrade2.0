@@ -97,5 +97,8 @@ class OrderService:
             commit=True
         )
 
+    async def get_order_for(self):
+        return self._repository_order.get_order_for()
+
 
 
