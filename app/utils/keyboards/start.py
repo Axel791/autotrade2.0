@@ -21,3 +21,30 @@ manager_keyboards_2.add(*manager_buttons_2)
 driver_keyboards.add(*driver_buttons)
 financier_and_accounting_keyboards.add(*financier_and_accounting_buttons)
 superuser_keyboard.add(*superuser)
+
+role = types.InlineKeyboardMarkup().add(
+    types.InlineKeyboardButton(
+        callback_data="manager",
+        text="Менеджер"
+    )
+).add(
+    types.InlineKeyboardButton(
+        callback_data="driver",
+        text="Водитель"
+    )
+).add(
+    types.InlineKeyboardButton(
+        callback_data="fin",
+        text="Бухгалтер"
+    )
+).add(
+    types.InlineKeyboardButton(
+        callback_data="fin",
+        text="Бухгалтер"
+    )
+).add(
+    types.InlineKeyboardButton(
+        callback_data="super_user",
+        text="Руководитель"
+    )
+)

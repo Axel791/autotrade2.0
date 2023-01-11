@@ -43,3 +43,7 @@ class TelegramUserService:
     async def list(self):
         return self._repository_telegram_user.list()
 
+    async def create(self, obj_in: dict):
+        return self._repository_telegram_user.create(
+            obj_in=obj_in,
+        )
