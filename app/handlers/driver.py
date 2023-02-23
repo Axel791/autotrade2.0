@@ -54,7 +54,8 @@ async def images_assembled(
         for order in orders[0*5:0*5+5]:
             await message.answer(f"💡{hbold('Активный заказа')}\n"
                                  f"📄{hbold('Описание')}:  {order.description}\n"
-                                 f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
+                                 f"❗️{hbold('Статус')}:  {order.order_status}\n"
+                                 f"Дата: {order.created_at}\n"
                                  f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
 
             for image in await images_service.get_images_by_order(
@@ -64,7 +65,8 @@ async def images_assembled(
                 await bot.send_photo(
                     user_id,
                     image.image,
-                    f"{hbold('📄Описание')}: {image.image_description}",
+                    f"{hbold('📄Описание')}: {image.image_description}\n"
+                    f"Дата: {image.created_at}",
                     reply_markup=await keyboard_service.forming_image_keyboard(
                         image_id=image.id,
                         text="Собран📥",
@@ -133,7 +135,8 @@ async def delivered_images(
         for order in orders[0*5:0*5+5]:
             await message.answer(f"💡{hbold('Активный заказа')}\n"
                                  f"📄{hbold('Описание')}:  {order.description}\n"
-                                 f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
+                                 f"❗️{hbold('Статус')}:  {order.order_status}\n"
+                                 f"Дата: {order.created_at}\n"
                                  f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
 
             for image in await images_service.get_images_by_order(
@@ -143,7 +146,8 @@ async def delivered_images(
                 await bot.send_photo(
                     user_id,
                     image.image,
-                    f"{hbold('📄Описание')}: {image.image_description}",
+                    f"{hbold('📄Описание')}: {image.image_description}\n"
+                    f"Дата: {image.created_at}",
                     reply_markup=await keyboard_service.forming_image_keyboard(
                         image_id=image.id,
                         text="Доставлен💨",
@@ -184,9 +188,10 @@ async def watch_next_orders_in_work(
     try:
         for order in orders[last_num * 5:last_num * 5 + 5]:
             await callback_query.message.answer(f"💡{hbold('Активный заказа')}\n"
-                                 f"📄{hbold('Описание')}:  {order.description}\n"
-                                 f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
-                                 f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
+                                                f"📄{hbold('Описание')}:  {order.description}\n"
+                                                f"❗️{hbold('Статус')}:  {order.order_status}\n"
+                                                f"Дата: {order.created_at}\n"
+                                                f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
 
             for image in await images_service.get_images_by_order(
                     image_status=Images.ImageStatus.in_work,
@@ -195,7 +200,8 @@ async def watch_next_orders_in_work(
                 await bot.send_photo(
                     user_id,
                     image.image,
-                    f"{hbold('📄Описание')}: {image.image_description}",
+                    f"{hbold('📄Описание')}: {image.image_description}\n"
+                    f"Дата: {image.created_at}",
                     reply_markup=await keyboard_service.forming_image_keyboard(
                         image_id=image.id,
                         text="Собран📥",
@@ -235,9 +241,10 @@ async def watch_next_orders_assembled(
     try:
         for order in orders[last_num * 5:last_num * 5 + 5]:
             await callback_query.message.answer(f"💡{hbold('Активный заказа')}\n"
-                                 f"📄{hbold('Описание')}:  {order.description}\n"
-                                 f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
-                                 f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
+                                                f"📄{hbold('Описание')}:  {order.description}\n"
+                                                f"❗️{hbold('Статус')}:  {order.order_status}\n"
+                                                f"Дата: {order.created_at}\n"
+                                                f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
 
             for image in await images_service.get_images_by_order(
                     image_status=Images.ImageStatus.assembled,
@@ -246,7 +253,8 @@ async def watch_next_orders_assembled(
                 await bot.send_photo(
                     user_id,
                     image.image,
-                    f"{hbold('📄Описание')}: {image.image_description}",
+                    f"{hbold('📄Описание')}: {image.image_description}\n"
+                    f"Дата: {image.created_at}",
                     reply_markup=await keyboard_service.forming_image_keyboard(
                         image_id=image.id,
                         text="Доставлен💨",

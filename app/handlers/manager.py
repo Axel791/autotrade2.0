@@ -64,7 +64,8 @@ async def managers_orders(
                 await bot.send_photo(
                     user_id,
                     image.image,
-                    f"{hbold('📄Описание: ')} {image.image_description}",
+                    f"{hbold('📄Описание: ')} {image.image_description}"
+                    f"Дата: {image.created_at}",
                     reply_markup=await keyboard_service.forming_manager_keyboard(
                         image_id=image.id,
                     )
@@ -101,20 +102,21 @@ async def watch_next_my_orders_managers(
     try:
         for order in orders[last_num * 5:last_num * 5 + 5]:
             await callback_query.message.answer(f"💡{hbold('Мой заказ:')}\n"
-                                 f"📄{hbold('Описание')}:  {order.description}\n"
-                                 f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
-                                 f"{hbold('Дата формирования')}: {order.created_at}",
-                                 reply_markup=await keyboard_service.order_edit_keyboard(
-                                     order_id=order.id
-                                 )
-                                 )
+                                                f"📄{hbold('Описание')}:  {order.description}\n"
+                                                f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
+                                                f"{hbold('Дата формирования')}: {order.created_at}",
+                                                reply_markup=await keyboard_service.order_edit_keyboard(
+                                                    order_id=order.id
+                                                )
+                                                )
             for image in await images_service.get_image_for_manager(
                     order_id=order.id
             ):
                 await bot.send_photo(
                     user_id,
                     image.image,
-                    f"{hbold('📄Описание: ')} {image.image_description}",
+                    f"{hbold('📄Описание: ')} {image.image_description}\n"
+                    f"Дата: {image.created_at}",
                     reply_markup=await keyboard_service.forming_manager_keyboard(
                         image_id=image.id,
                     )
@@ -150,7 +152,8 @@ async def get_order_details(
         await bot.send_photo(
             user_id,
             image.image,
-            f"{hbold('📄Описание: ')} {image.image_description}",
+            f"{hbold('📄Описание: ')} {image.image_description}\n"
+            f"Дата: {image.created_at}",
         )
 
 

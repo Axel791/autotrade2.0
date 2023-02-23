@@ -91,7 +91,8 @@ async def get_type_of_view(
                     await bot.send_photo(
                         user_id,
                         image.image,
-                        f"{hbold('📄Описание')}: {image.image_description}"
+                        f"{hbold('📄Описание')}: {image.image_description}\n"
+                        f"Дата: {image.created_at}"
                     )
         except RetryAfter as retry:
             await asyncio.sleep(retry.timeout)
@@ -613,7 +614,8 @@ async def in_work(
         for order in orders[0*5:0*5+5]:
             await message.answer(f"💡{hbold('Активный заказа')}\n"
                                  f"📄{hbold('Описание')}:  {order.description}\n"
-                                 f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
+                                 f"❗️{hbold('Статус')}:  {order.order_status}\n"
+                                 f"Дата: {order.created_at}\n"
                                  f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
             images = await images_service.get_images_assembled_or_in_work()
             if images:
@@ -621,7 +623,8 @@ async def in_work(
                     await bot.send_photo(
                         user_id,
                         image.image,
-                        f"{hbold('📄Описание: ')} {image.image_description}",
+                        f"{hbold('📄Описание: ')} {image.image_description}\n"
+                        f"Дата: {image.created_at}",
                         reply_markup=await keyboard_service.forming_manager_keyboard(
                             image_id=image.id,
                         )
@@ -658,16 +661,18 @@ async def watch_next_all_orders(
     try:
         for order in orders[last_num * 5:last_num * 5 + 5]:
             await callback_query.message.answer(f"💡{hbold('Активный заказа')}\n"
-                                 f"📄{hbold('Описание')}:  {order.description}\n"
-                                 f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
-                                 f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
+                                                f"📄{hbold('Описание')}:  {order.description}\n"
+                                                f"❗️{hbold('Статус')}:  {order.order_status}\n"
+                                                f"Дата: {order.created_at}\n"
+                                                f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
             images = await image_service.get_images_assembled_or_in_work()
             if images:
                 for image in images:
                     await bot.send_photo(
                         user_id,
                         image.image,
-                        f"{hbold('📄Описание: ')} {image.image_description}",
+                        f"{hbold('📄Описание: ')} {image.image_description}\n"
+                        f"Дата: {image.created_at}",
                         reply_markup=await keyboard_service.forming_manager_keyboard(
                             image_id=image.id,
                         )
