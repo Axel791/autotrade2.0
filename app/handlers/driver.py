@@ -55,7 +55,7 @@ async def images_assembled(
             await message.answer(f"💡{hbold('Активный заказа')}\n"
                                  f"📄{hbold('Описание')}:  {order.description}\n"
                                  f"❗️{hbold('Статус')}:  {order.order_status}\n"
-                                 f"Дата: {order.created_at}\n"
+                                 f"Дата: {order.created_at.strftime('%d-%m-%Y')}\n"
                                  f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
 
             for image in await images_service.get_images_by_order(
