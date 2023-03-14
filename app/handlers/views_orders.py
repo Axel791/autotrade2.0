@@ -80,7 +80,7 @@ async def get_type_of_view(
             for order in orders:
                 await callback_query.message.answer(f"{hbold('💡Заказ')}\n\n"
                                                     f"{hbold('📄Описание')}: {order.description}\n"
-                                                    f"{hbold('Создан')}: {order.created_at}\n"
+                                                    f"{hbold('Создан')}: {order.created_at.strftime('%d-%m-%Y')}\n"
                                                     f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
                                                     f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}",
                                                     reply_markup=await keyboard_service.close_fin_order(
@@ -92,7 +92,7 @@ async def get_type_of_view(
                         user_id,
                         image.image,
                         f"{hbold('📄Описание')}: {image.image_description}\n"
-                        f"Дата: {image.created_at}"
+                        f"Дата: {image.created_at.strftime('%d-%m-%Y')}"
                     )
         except RetryAfter as retry:
             await asyncio.sleep(retry.timeout)
@@ -134,7 +134,7 @@ async def send_report(
             await callback_query.message.answer(
                         f"{hbold('Отчет')}\n\n"
                         f"{report.report}\n"
-                        f"{hbold('Дата')}: {report.created_at}\n"
+                        f"{hbold('Дата')}: {report.created_at.strftime('%d-%m-%Y')}\n"
                         f"{hbold('Менеджер')}: {report.user.last_name}",
                         reply_markup=report_keyboard
                     )
@@ -615,7 +615,7 @@ async def in_work(
             await message.answer(f"💡{hbold('Активный заказа')}\n"
                                  f"📄{hbold('Описание')}:  {order.description}\n"
                                  f"❗️{hbold('Статус')}:  {order.order_status}\n"
-                                 f"Дата: {order.created_at}\n"
+                                 f"Дата: {order.created_at.strftime('%d-%m-%Y')}\n"
                                  f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
             images = await images_service.get_images_assembled_or_in_work()
             if images:
@@ -624,7 +624,7 @@ async def in_work(
                         user_id,
                         image.image,
                         f"{hbold('📄Описание: ')} {image.image_description}\n"
-                        f"Дата: {image.created_at}",
+                        f"Дата: {image.created_at.strftime('%d-%m-%Y')}",
                         reply_markup=await keyboard_service.forming_manager_keyboard(
                             image_id=image.id,
                         )
@@ -663,7 +663,7 @@ async def watch_next_all_orders(
             await callback_query.message.answer(f"💡{hbold('Активный заказа')}\n"
                                                 f"📄{hbold('Описание')}:  {order.description}\n"
                                                 f"❗️{hbold('Статус')}:  {order.order_status}\n"
-                                                f"Дата: {order.created_at}\n"
+                                                f"Дата: {order.created_at.strftime('%d-%m-%Y')}\n"
                                                 f"🧑🏾‍💻{hbold('Менеджер')}:  {order.user.last_name}")
             images = await image_service.get_images_assembled_or_in_work()
             if images:
@@ -672,7 +672,7 @@ async def watch_next_all_orders(
                         user_id,
                         image.image,
                         f"{hbold('📄Описание: ')} {image.image_description}\n"
-                        f"Дата: {image.created_at}",
+                        f"Дата: {image.created_at.strftime('%d-%m-%Y')}",
                         reply_markup=await keyboard_service.forming_manager_keyboard(
                             image_id=image.id,
                         )

@@ -53,7 +53,7 @@ async def managers_orders(
             await message.answer(f"💡{hbold('Мой заказ:')}\n"
                                  f"📄{hbold('Описание')}:  {order.description}\n"
                                  f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
-                                 f"{hbold('Дата формирования')}: {order.created_at}",
+                                 f"{hbold('Дата формирования')}: {order.created_at.strftime('%d-%m-%Y')}",
                                  reply_markup=await keyboard_service.order_edit_keyboard(
                                      order_id=order.id
                                     )
@@ -65,7 +65,7 @@ async def managers_orders(
                     user_id,
                     image.image,
                     f"{hbold('📄Описание: ')} {image.image_description}"
-                    f"Дата: {image.created_at}",
+                    f"Дата: {image.created_at.strftime('%d-%m-%Y')}",
                     reply_markup=await keyboard_service.forming_manager_keyboard(
                         image_id=image.id,
                     )
@@ -104,7 +104,7 @@ async def watch_next_my_orders_managers(
             await callback_query.message.answer(f"💡{hbold('Мой заказ:')}\n"
                                                 f"📄{hbold('Описание')}:  {order.description}\n"
                                                 f"❗️{hbold('Статус')}:  {order.order_status}\n\n"
-                                                f"{hbold('Дата формирования')}: {order.created_at}",
+                                                f"{hbold('Дата формирования')}: {order.created_at.strftime('%d-%m-%Y')}",
                                                 reply_markup=await keyboard_service.order_edit_keyboard(
                                                     order_id=order.id
                                                 )
@@ -116,7 +116,7 @@ async def watch_next_my_orders_managers(
                     user_id,
                     image.image,
                     f"{hbold('📄Описание: ')} {image.image_description}\n"
-                    f"Дата: {image.created_at}",
+                    f"Дата: {image.created_at.strftime('%d-%m-%Y')}",
                     reply_markup=await keyboard_service.forming_manager_keyboard(
                         image_id=image.id,
                     )
@@ -153,7 +153,7 @@ async def get_order_details(
             user_id,
             image.image,
             f"{hbold('📄Описание: ')} {image.image_description}\n"
-            f"Дата: {image.created_at}",
+            f"Дата: {image.created_at.strftime('%d-%m-%Y')}",
         )
 
 
